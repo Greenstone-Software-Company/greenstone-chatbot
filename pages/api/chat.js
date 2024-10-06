@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 const cors = Cors({
-  methods: ['POST', 'GET', 'HEAD'],
+  methods: ['POST', 'GET', 'HEAD', 'OPTIONS'],
   origin: '*', // Be cautious with this in production
 })
 
@@ -23,6 +23,10 @@ function runMiddleware(req, res, fn) {
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors)
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
   
   if (req.method === 'POST') {
     const { message } = req.body;
@@ -55,7 +59,7 @@ export default async function handler(req, res) {
       res.status(500).json({ error: "Internal server error", response: "I'm having trouble responding right now. Please try again later." });
     }
   } else {
-    res.setHeader('Allow', ['POST']);
+    res.setHeader('Allow', ['POST', 'OPTIONS']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
