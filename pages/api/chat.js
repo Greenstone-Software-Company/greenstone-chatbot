@@ -7,6 +7,7 @@ const openai = new OpenAI({
 
 const cors = Cors({
   methods: ['POST', 'GET', 'HEAD'],
+  origin: '*', // Be cautious with this in production
 })
 
 function runMiddleware(req, res, fn) {
