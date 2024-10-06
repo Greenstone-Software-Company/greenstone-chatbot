@@ -1,16 +1,28 @@
 import OpenAI from 'openai';
+import Cors from 'cors'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const fallbackResponses = [
-  "I'm sorry, I didn't quite understand that. Can you rephrase your question?",
-  "I'm here to assist you, but I need a bit more information. Could you clarify your question?",
-  "I'm not sure how to answer that, but I can help with other queries. What else can I do for you?",
-];
+const cors = Cors({
+  methods: ['POST', 'GET', 'HEAD'],
+})
+
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result)
+      }
+      return resolve(result)
+    })
+  })
+}
 
 export default async function handler(req, res) {
+  await runMiddleware(req, res, cors)
+  
   if (req.method === 'POST') {
     const { message } = req.body;
 
@@ -25,11 +37,6 @@ export default async function handler(req, res) {
       });
 
       let botMessage = completion.choices[0].message.content.trim();
-
-      if (!botMessage || botMessage.length < 3) {
-        botMessage = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-      }
-
       let link = "";
       let image = "";
 
@@ -43,9 +50,8 @@ export default async function handler(req, res) {
 
       res.status(200).json({ response: botMessage, link, image });
     } catch (error) {
-      console.error('Error in chat API:', error);
-      const fallbackResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-      res.status(500).json({ error: 'Internal Server Error', response: fallbackResponse });
+      console.error("Error in chat API:", error);
+      res.status(500).json({ error: "Internal server error", response: "I'm having trouble responding right now. Please try again later." });
     }
   } else {
     res.setHeader('Allow', ['POST']);

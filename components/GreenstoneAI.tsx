@@ -46,7 +46,8 @@ export default function GreenstoneAI() {
         setInput("")
 
         try {
-            const response = await fetch('/api/chat', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/chat'
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: input }),
